@@ -5,6 +5,7 @@ import org.eclipse.emf.ecore.EObject;
 import org.junit.Test;
 import org.yakindu.sct.model.sgraph.State;
 import org.yakindu.sct.model.sgraph.Statechart;
+import org.yakindu.sct.model.sgraph.Transition;
 
 import hu.bme.mit.model2gml.Model2GML;
 import hu.bme.mit.yakindu.analysis.modelmanager.ModelManager;
@@ -19,22 +20,36 @@ public class Main {
 		ModelManager manager = new ModelManager();
 		Model2GML model2gml = new Model2GML();
 		
+		
 		// Loading model
 		EObject root = manager.loadModel("model_input/example.sct");
 		
 		// Reading model
 		Statechart s = (Statechart) root;
 		TreeIterator<EObject> iterator = s.eAllContents();
+		int unique_id = 0;
 		while (iterator.hasNext()) {
 			EObject content = iterator.next();
+			if(content instanceof Transition) {
+				Transition t = (Transition) content;
+				System.out.println(String.format("%s -> %s", t.getSource().getName(), t.getTarget().getName()));
+			}
 			if(content instanceof State) {
 				State state = (State) content;
-				System.out.println(state.getName());
+				if(state.getOutgoingTransitions().isEmpty()) {
+					System.out.println(String.format("%s is a trap state.", state.getName()));
+				}
+				if(state.getName() == null && state.getName().equals("")) {
+					System.out.println(String.format("State has no name, suggested: Anonim%i", unique_id++));
+				}else
+					System.out.println(state.getName());
 			}
 		}
 		
 		// Transforming the model into a graph representation
 		String content = model2gml.transform(root);
+	
+		
 		// and saving it
 		manager.saveFile("model_output/graph.gml", content);
 	}
